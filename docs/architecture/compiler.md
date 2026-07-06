@@ -59,6 +59,7 @@ through every emitter.
 | **bundle** | `databricks.yml` + resource fragments | Targets map to environments; permissions from ownership block |
 | **monitors** | Lakehouse Monitoring configs | Freshness/volume/quality monitors from the SLA block |
 | **docs** | Product page, column-level docs | Rendered from the spec — documentation can't drift from the contract because it *is* the contract |
+| **derivations** | Calculated-column expressions compiled into the target's scaffold (dbt model / Lakeflow step) | From `transformation.derivations` ([ADR-0007](../adr/0007-derivations-vs-intent.md)); compiler-authored, agent builds around it and never rewrites it |
 | **brief** | The generation brief (below) | The compiler's contract with the agent |
 
 ## The generation brief

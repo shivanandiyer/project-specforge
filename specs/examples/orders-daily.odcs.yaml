@@ -36,9 +36,11 @@ x-buildspec:
     - { name: commerce_orders, connection: "uc:main.bronze.commerce_orders", expectation: cdc }
     - { name: fx_rates,        connection: "uc:main.reference.fx_rates",     expectation: snapshot }
   transformation:
+    derivations:
+      net_amount: "commerce_orders.gross_amount * fx_rates.rate_to_aud - commerce_orders.discount_amount"
     intent: |
-      One row per successful order per day. Join fx_rates on order currency to
-      compute net_amount in AUD. Exclude test orders (customer_segment = internal).
+      One row per successful order per day, keyed by order_id. Join fx_rates on
+      order currency to resolve rate_to_aud. Exclude test orders (customer_segment = internal).
   operations:
     environments:
       dev:     { catalog: dev_main, schema: sales }

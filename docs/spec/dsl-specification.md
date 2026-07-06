@@ -85,9 +85,11 @@ x-buildspec:                           # everything below is the specforge exten
       connection: uc:main.reference.fx_rates
       expectation: snapshot
   transformation:
+    derivations:                       # compiler-computed calculated columns (§4)
+      net_amount: "commerce_orders.gross_amount * fx_rates.rate_to_aud - commerce_orders.discount_amount"
     intent: |                          # natural-language intent — agent guidance,
-      One row per successful order per day. Join fx_rates on order  # never truth
-      currency to compute net_amount in AUD. Exclude test orders
+      One row per successful order per day, keyed by order_id. Join fx_rates on   # never truth
+      order currency to resolve rate_to_aud. Exclude test orders
       (customer_segment = 'internal').
   operations:
     environments:
@@ -113,7 +115,8 @@ x-buildspec:                           # everything below is the specforge exten
 | `slaProperties` | ODCS | compiler | Lakehouse Monitoring configs |
 | `x-buildspec.build` | ext | engine | Target routing, builder selection, budgets |
 | `x-buildspec.sources` | ext | compiler → brief | Resolved source bindings for the agent |
-| `x-buildspec.transformation.intent` | ext | brief only | Agent guidance (see §4) |
+| `x-buildspec.transformation.derivations` | ext | compiler | Calculated columns, compiled directly — no agent (see §4) |
+| `x-buildspec.transformation.intent` | ext | brief only | Agent guidance for join/filter/dedup logic (see §4) |
 | `x-buildspec.operations` | ext | compiler | DAB targets, schedule, compute |
 | `x-buildspec.governance` | ext | publisher | Grants, spec publication |
 
@@ -125,14 +128,35 @@ Validation runs in CI on every spec PR with no Databricks connection required fo
 layers 1–2; layer 3 (policy) may consult org config. A spec that doesn't validate
 never reaches an agent.
 
-## 4. The `intent` field — a deliberate boundary
+## 4. Derivations vs. `intent` — where business logic lives
 
-`transformation.intent` is the one free-text field, and it has exactly one consumer:
-the generation brief. It is *guidance* for the agent, never *truth* — the truth is
+Business logic that maps sources to the contracted schema splits into two blocks,
+by whether it needs judgment ([ADR-0007](../adr/0007-derivations-vs-intent.md)):
+
+**`transformation.derivations`** — a map of `<output column>: <expression>`, where
+the expression is a single-row SQL expression over already-resolved input fields —
+one output row in, one output row out, no aggregates, no window functions. A 1:1
+lookup already set up by `intent` (e.g. an FX rate per order) is fine; a one-to-many
+join or aggregation is not. This is compiler territory: derivations are compiled
+directly into the target's generated code, the same way `schema` becomes DDL and
+`quality` becomes tests. No agent is involved, and a wrong formula is a spec diff
+away from being fixed, not a build away.
+
+**`transformation.intent`** — the one free-text field, narrowed to logic that
+genuinely requires judgment: which rows qualify, which join keys to use, how to
+deduplicate, which source wins on conflict. It has exactly one consumer, the
+generation brief, and it is *guidance* for the agent, never *truth* — the truth is
 the schema + quality + acceptance tests. If intent and tests disagree, tests win, and
 the correct fix is a spec PR. This keeps natural language useful (it dramatically
 improves first-pass generation quality) without letting it become an unenforceable
 side-channel contract.
+
+**Rule of thumb:** if it's a per-row expression — even one that reaches across a
+1:1 lookup already set up by `intent` (e.g. resolving an FX rate per order) — it
+belongs in `derivations`. If it requires aggregation, window functions, or a
+one-to-many/fan-out join, it belongs in `intent`, built by the agent. The compiler's
+semantic validation layer rejects a derivation expression containing an aggregate or
+window function, since that's a sign the logic needs more than a per-row lookup.
 
 ## 5. Build-target routing
 

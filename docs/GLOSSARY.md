@@ -43,6 +43,8 @@ docs, it's probably here.
 | **Engine** | The deterministic orchestrator that sequences the lifecycle (`plan`/`apply`) and invokes the compiler, builder, verifier, and publisher in order. |
 | **Compiler** | The deterministic component that derives every mechanically-derivable artifact from a spec: DDL, tests, DAB manifest, docs, monitors, and the generation brief. Contains no LLM calls. See [compiler.md](architecture/compiler.md). |
 | **Generation brief** | The compiler's self-contained instruction package handed to the builder agent — inputs, target schema, acceptance tests, constraints. The agent never reads the raw spec, only the brief. |
+| **Derivation** | A calculated-column expression declared in `transformation.derivations` — a single-row formula over already-resolved input fields (no joins, no aggregation). Compiled directly by the compiler; no agent involved. See [ADR-0007](adr/0007-derivations-vs-intent.md). |
+| **Intent** | The free-text field in `transformation.intent` describing logic that requires judgment — which rows qualify, which join keys, dedup rules. Guidance for the builder agent, never enforced truth. |
 | **Builder agent** | The pluggable coding agent (Claude Code or Genie Code) that writes transformation logic against a generation brief. The system's deliberately small non-deterministic surface. |
 | **Verifier** | The component that executes the compiler-emitted contract-test suite against a build and produces the pass/fail deploy gate. |
 | **Publisher** | The component that writes governance records — UC tags, the published resolved spec — after a successful deploy. |

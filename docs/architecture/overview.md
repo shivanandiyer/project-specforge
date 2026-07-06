@@ -98,7 +98,8 @@ Splitting derivation from generation fixes all three:
 | Monitoring config (freshness, volume, quality monitors) | Yes — from the SLA block | Compiler |
 | Documentation (product page, column docs, lineage stubs) | Yes — from the whole spec | Compiler |
 | Generation brief (what the agent must build, and the acceptance tests it must pass) | Yes | Compiler |
-| **Transformation logic** (source → contracted schema) | **No — requires judgment** | **Builder agent** |
+| Calculated columns (`transformation.derivations` — single-row expressions) | Yes — it's a declared expression | Compiler |
+| **Transformation logic** (joins, filters, dedup — `transformation.intent`) | **No — requires judgment** | **Builder agent** |
 | **Evolution proposals** (how to respond to drift) | **No — requires judgment** | **Agent, as a PR** |
 
 The agentic surface is two rows. Everything else is reproducible, diffable in PRs,

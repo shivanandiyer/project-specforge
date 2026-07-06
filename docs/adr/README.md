@@ -8,6 +8,7 @@
 | [0004](0004-compiler-generator-split.md) | Deterministic compiler / agentic generator split | Accepted |
 | [0005](0005-dab-deployment-substrate.md) | Databricks Asset Bundles as the only deploy path | Accepted |
 | [0006](0006-reconciliation-via-pr.md) | Reconciliation actuates via PR, not auto-mutation | Accepted |
+| [0007](0007-derivations-vs-intent.md) | Split calculated-column derivations out of `intent` | Accepted |
 
 Format: context → decision → consequences. New ADRs are numbered sequentially and
 never deleted; superseded ADRs are marked as such and linked forward.
