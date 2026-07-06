@@ -22,8 +22,13 @@ compiler emitters.
 | A policy rule | compiler policy-validation plugin | `compiler/policies/` |
 
 ## Workflow
-- Spec/DSL changes: PR against `docs/spec/dsl-specification.md` + JSON Schema +
-  an ADR if semantics change. DSL is versioned; breaking changes need a major bump.
+- Spec/DSL changes: PR against `docs/spec/dsl-specification.md` +
+  [`schema/x-buildspec.schema.json`](schema/x-buildspec.schema.json) + an ADR if
+  semantics change. DSL is versioned; breaking changes need a major bump. CI
+  ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs
+  `scripts/validate_spec.py` against every spec under `specs/` on every PR.
+- Docs changes: CI runs `scripts/check_doc_links.py` — a moved or renamed file that
+  breaks a cross-reference fails the build, not a future reader.
 - Code: conventional PR flow; CI must show `specforge plan` output for any change
   touching emitters (golden-file tests keep outputs reviewable as diffs).
 - Every builder PR must pass the builder conformance suite (headless run, scratch-only
