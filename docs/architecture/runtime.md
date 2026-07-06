@@ -10,9 +10,15 @@ Databricks Asset Bundles are the sole deployment mechanism
 ([ADR-0005](../adr/0005-dab-deployment-substrate.md)). The compiler emits the bundle;
 the engine runs `bundle deploy` per target environment.
 
+Nothing reaches deploy without passing through git. Generated implementations arrive
+as **implementation pull requests** — code, brief, build log, and verification
+report together ([ADR-0008](../adr/0008-implementation-via-pr.md)); merging that PR
+is what triggers deploy, exactly as merging a spec PR triggers compile.
+
 ```mermaid
 flowchart LR
-    V["verified build"] --> DEV["deploy: dev"] --> ST["deploy: staging"] --> PR["deploy: prod"]
+    G["generated + verified<br/>implementation"] -->|"implementation PR<br/>(human merge)"| M["merged to main"]
+    M --> DEV["deploy: dev"] --> ST["deploy: staging"] --> PR["deploy: prod"]
     ST -->|"contract tests re-run<br/>against real data"| ST
 ```
 
@@ -34,6 +40,36 @@ staging-scale reality.
 3. **Installs monitors** from the compiler-emitted Lakehouse Monitoring configs:
    freshness monitors from the SLA block, volume/quality monitors from the quality
    block's `monitor: true` rules.
+4. **Appends a record to the deployment ledger** (below).
+
+## The deployment ledger
+
+Every build and deploy appends an immutable record to a Delta table in a
+platform-owned UC schema ([ADR-0009](../adr/0009-deployment-ledger.md)): spec
+commit, artifact hashes, implementation commit, builder + version, budget spent,
+verification report reference, deploy status, timestamps.
+
+The ledger is **provenance, not authority** — truth remains git (desired state) and
+UC (observed state); losing the ledger loses history, not correctness. It exists
+because plan/apply without a durable baseline is Terraform without state:
+
+- **`plan`** anchors its diff on the latest successful record per (product, env),
+  so it can distinguish "never deployed" from "deleted out-of-band."
+- **The reconciler** baselines drift on the last-converged record and writes
+  heartbeat records back — the Kubernetes `status` subresource, adapted. This also
+  makes reconciliation incremental: only products whose spec commit or observed
+  signals changed since last convergence need a diff.
+- **Auditors** get "what ran in prod on March 3, built by which agent, from which
+  contract version" as a SQL query.
+
+## Where specforge itself runs
+
+There is no long-running specforge service. The v1 control plane is a **CLI invoked
+by CI** (compile/validate on spec PRs; generate/verify/PR on merge; deploy on
+implementation-PR merge) plus **scheduled jobs** for the reconciler and drift
+detection. State lives in git, UC, and the ledger — never in the tool. This is a
+deliberate adoptability decision: a platform team can run specforge with a CI
+runner and a schedule, no service to operate, patch, or page on.
 
 ## Observation
 
@@ -89,6 +125,13 @@ Contracts version like APIs, because they are APIs:
 The compiler's plan output classifies every spec diff into one of these rows, so a
 PR reviewer sees "this is a breaking change to `orders_daily` v2 → v3" before merge,
 not after an angry consumer files a ticket.
+
+**Open concern, deliberately named:** the *mechanics* of major-version evolution —
+backfill strategy, dual-run windows, reprocessing history when derivation logic
+changes — are not yet designed. A migration note in the PR is a placeholder, not a
+mechanism. An `operations.migration` block and an engine-run backfill step are
+scheduled for design (ADR) before Phase 3 hardening; see the
+[architecture review](../../ARCHITECTURE_REVIEW.md) (W6/R6).
 
 ## Failure and rollback
 

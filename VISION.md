@@ -43,7 +43,9 @@ possible, agentic where necessary — keeps reality converged to it.
    is derived by the compiler, reproducibly. The agentic surface is deliberately
    minimal: transformation logic and evolution proposals.
 4. **GitOps native.** Specs live in git. Changes are PRs. Deploys are reconciliations
-   of git state. Even the AI's evolution proposals arrive as PRs a human can review.
+   of git state. Everything the AI produces — generated implementations and evolution
+   proposals alike — arrives as a PR a human can review; nothing agent-written
+   reaches production unmerged.
 5. **Standards over invention.** ODCS for contracts, Databricks Asset Bundles for
    deployment, MCP for agent tooling, established quality frameworks for testing.
    specforge invents only the connective tissue.
@@ -59,8 +61,9 @@ possible, agentic where necessary — keeps reality converged to it.
 ## What success looks like
 
 - A data engineer writes (or asks an agent to draft) a ~100-line contract, opens a
-  PR, and within one review cycle has a tested, documented, governed data product
-  running in Databricks — without writing pipeline code.
+  PR, and after two quick reviews — the contract, then the agent's implementation
+  PR with its verification evidence attached — has a tested, documented, governed
+  data product running in Databricks, without writing pipeline code.
 - A consumer discovers the product in Unity Catalog and finds the *actual contract*
   next to the data — not stale documentation.
 - Six months later a source schema shifts. The reconciler detects contract drift,

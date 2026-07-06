@@ -49,6 +49,8 @@ docs, it's probably here.
 | **Verifier** | The component that executes the compiler-emitted contract-test suite against a build and produces the pass/fail deploy gate. |
 | **Publisher** | The component that writes governance records — UC tags, the published resolved spec — after a successful deploy. |
 | **Reconciler** | The component that compares live/observed state (UC + monitoring + runs) against desired state (spec, compiled) and produces either an auto-repair (mechanical drift) or a drift report (semantic drift). |
+| **Implementation PR** | The pull request that carries a generated implementation — code, brief, build log, and verification report together. Merging it is what triggers deploy; no agent-written code reaches production unreviewed. See [ADR-0008](adr/0008-implementation-via-pr.md). |
+| **Deployment ledger** | An append-only Delta table in UC recording every build and deploy (spec commit, artifact hashes, builder, verification report, deploy status). Provenance, not authority — anchors `plan`, baselines the reconciler, and answers audit queries. See [ADR-0009](adr/0009-deployment-ledger.md). |
 | **Evolution agent** | The builder SPI reused with a different trigger: takes a drift report as input, proposes a PR against the spec and/or implementation as output. Never mutates directly. |
 | **Resolved spec** | The spec after the compiler's resolve stage — environment bindings filled in, build target resolved from `auto`. What's actually published to UC; what actually shipped. |
 

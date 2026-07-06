@@ -1,6 +1,6 @@
 # Architecture overview
 
-specforge is organized as **three planes** around a **seven-phase lifecycle**. The
+specforge is organized as **three planes** around an **eight-phase lifecycle**. The
 guiding rule for every component placement: *determinism wherever possible, agents
 only where judgment is required*.
 
@@ -33,7 +33,7 @@ flowchart TB
     COMPILER -->|"generation brief"| BUILDER
     BUILDER -->|"implementation"| VERIFIER
     COMPILER -->|"tests, DDL, DAB manifest"| VERIFIER
-    VERIFIER -->|"gate passed"| DAB
+    VERIFIER -->|"gate passed → impl PR<br/>→ human merge"| DAB
     DAB --> PIPE
     DAB --> UC
     MON --> RECON
@@ -60,7 +60,7 @@ plane and humans *decide*.
 
 ```mermaid
 flowchart LR
-    A[author] --> C[compile] --> G[generate] --> V[verify] --> D[deploy] --> O[observe] --> E[evolve]
+    A[author] --> C[compile] --> G[generate] --> V[verify] --> R["review (PR)"] --> D[deploy] --> O[observe] --> E[evolve]
     E -.->|PR| A
 ```
 
@@ -70,16 +70,22 @@ flowchart LR
 | **compile** | Compiler | Spec @ pinned commit | DDL, tests, DAB manifest, docs, generation brief |
 | **generate** | Builder agent | Generation brief + repo context | Transformation code (Lakeflow / dbt) |
 | **verify** | Verifier | Implementation + compiled tests | Pass/fail gate, verification report |
-| **deploy** | Engine → DAB | Verified bundle | Running product; UC objects tagged; spec published to UC |
+| **review** | Human (merge gate) | Implementation PR: code + brief + build log + verification report ([ADR-0008](../adr/0008-implementation-via-pr.md)) | Merged implementation |
+| **deploy** | Engine → DAB | Verified, merged bundle | Running product; UC objects tagged; spec published to UC; ledger record appended ([ADR-0009](../adr/0009-deployment-ledger.md)) |
 | **observe** | Lakehouse Monitoring + reconciler | Declared SLAs | Health signals, drift reports |
 | **evolve** | Agent (propose) + human (approve) | Drift report | PR against spec and/or implementation |
 
 Two workflow verbs wrap this, borrowed directly from Terraform:
 
 - **`specforge plan`** — runs compile, diffs derived artifacts and target state
-  against what's currently deployed, and prints what *would* change. No side effects.
-- **`specforge apply`** — executes the plan: generate (if implementation is missing
-  or stale), verify, deploy, publish.
+  against the deployment ledger's last successful record
+  ([ADR-0009](../adr/0009-deployment-ledger.md)), and prints what *would* change.
+  No side effects.
+- **`specforge apply`** — drives to the **next gate**, not to production
+  ([ADR-0008](../adr/0008-implementation-via-pr.md)): if implementation is missing
+  or stale, apply generates, verifies, and opens an implementation PR; if a merged,
+  verified implementation is waiting, apply deploys and publishes. Production
+  always reflects merged git state — even when the author was an agent.
 
 ## Why the compiler/generator split matters
 

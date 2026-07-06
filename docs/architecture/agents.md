@@ -31,7 +31,7 @@ sequenceDiagram
 | | |
 |---|---|
 | **Input** | Generation brief; scratch workspace; scoped credentials (scratch schema only) |
-| **Output** | Implementation files matching the target adapter's expected shape; structured build log (steps taken, decisions made, test iterations) |
+| **Output** | Implementation files matching the target adapter's expected shape, delivered as a pull request with the brief, build log, and verification report attached ([ADR-0008](../adr/0008-implementation-via-pr.md)); **structured** build log (machine-readable steps, tool calls, test iterations, budget spend — this is the eval corpus, not prose) |
 | **Guarantees required of every builder** | Runs headless/unattended (CI-invokable); writes only inside the workspace and scratch schema; terminates (iteration budget); emits the build log even on failure |
 | **Explicitly not the builder's job** | Deciding what "correct" means; deploying; touching production; modifying the spec |
 
@@ -61,6 +61,25 @@ Databricks access, specforge standardizes on **MCP servers** as the context laye
   (against scratch). Any MCP-capable agent gets the same view of the world.
 - Databricks' managed MCP surface (UC functions, Genie spaces) slots in where
   available; the specforge server is the portable minimum.
+
+### Sampling and data egress policy
+
+`sample_source` is the one place an agent touches real data, so it is governed, not
+open. The schema block already classifies columns (PII tags, `financial`, etc.);
+the sampling layer consumes those classifications:
+
+- **Three sampling modes**, set per source or as org policy: `none` (metadata-only
+  briefs — schemas and profile statistics, no rows), `masked` (rows served with
+  classified columns masked/tokenized per classification rules), `full` (raw rows).
+- **Builder locality matters.** In-workspace builders (Genie Code) never move data
+  outside the platform's governance boundary. External builders (Claude Code CLI)
+  do — they default to `masked`, and the compiler's policy-validation layer can
+  forbid external builders outright for specs containing classified columns.
+- Every `sample_source` call is logged to the build's flight record: who sampled
+  what, in which mode, under which policy.
+
+This turns the platform's sharpest governance liability into a demonstrable
+control, using metadata the contract already carries.
 
 This is also the platform's own front door: **every engine capability
 (`plan`, `apply`, `compile`, `verify`, `drift`) is exposed as an MCP tool**, so a

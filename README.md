@@ -8,9 +8,9 @@ data product it describes. AI agents do the implementation work, but they never 
 the truth. The spec does.
 
 ```
-   spec.yaml  ──►  compile  ──►  generate  ──►  verify  ──►  deploy  ──►  observe
-      ▲                                                                      │
-      └────────────────────────  evolve (drift → PR)  ◄─────────────────────┘
+   spec.yaml ──► compile ──► generate ──► verify ──► review ──► deploy ──► observe
+      ▲                                                                       │
+      └─────────────────────────  evolve (drift → PR)  ◄─────────────────────┘
 ```
 
 ## The idea in one table
@@ -40,10 +40,13 @@ the truth. The spec does.
    sources to the contracted schema.
 4. **Verify.** The generated implementation must pass the compiler-derived contract
    tests. The agent doesn't grade its own homework — the gate is deterministic.
-5. **Deploy.** Databricks Asset Bundles promote the product through dev → staging → prod.
+5. **Review.** The verified implementation arrives as a pull request — code, brief,
+   build log, and verification report together. A human merges it; no agent-written
+   code reaches production unreviewed, and production always reflects merged git state.
+6. **Deploy.** Databricks Asset Bundles promote the product through dev → staging → prod.
    The resulting Unity Catalog objects are tagged with the spec version and the agent
    that built them, and the resolved spec is published into UC next to the data.
-6. **Observe & evolve.** Lakehouse Monitoring watches the SLAs the spec declared. A
+7. **Observe & evolve.** Lakehouse Monitoring watches the SLAs the spec declared. A
    reconciler compares live state against the spec; drift produces a report, and the
    agent proposes a corrective PR. Humans approve. The loop closes.
 
@@ -54,6 +57,9 @@ the truth. The spec does.
 - **The quality gate is derived from the contract, not written by the agent.** Tests
   come from the spec's own quality block, so "does it satisfy the contract" is a
   mechanical question.
+- **No agent-written code reaches production unreviewed.** Implementations arrive as
+  pull requests carrying the brief, build log, and verification evidence; deploy
+  follows merge, so production always reflects reviewed git state.
 - **Evolution is a first-class phase, not an afterthought.** Most codegen tools stop
   at deploy. specforge treats the deployed product as observed state to reconcile.
 - **Agent-agnostic by construction.** The builder SPI means swapping Claude Code for
@@ -96,6 +102,7 @@ project-specforge/
 | [docs/spec/dsl-specification.md](docs/spec/dsl-specification.md) | The spec format: ODCS + `x-buildspec` |
 | [docs/adr/](docs/adr/) | Why the architecture is the way it is |
 | [docs/GLOSSARY.md](docs/GLOSSARY.md) | Reference for jargon and acronyms (ODCS, DSL, DAB, SPI, MCP, etc.) |
+| [ARCHITECTURE_REVIEW.md](ARCHITECTURE_REVIEW.md) | Lead-architect review: strengths, gaps, adopted changes (ADR 0008/0009), prioritized recommendations |
 | [ROADMAP.md](ROADMAP.md) | Phased delivery plan |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to extend the platform |
 

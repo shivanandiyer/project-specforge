@@ -9,6 +9,8 @@
 | [0005](0005-dab-deployment-substrate.md) | Databricks Asset Bundles as the only deploy path | Accepted |
 | [0006](0006-reconciliation-via-pr.md) | Reconciliation actuates via PR, not auto-mutation | Accepted |
 | [0007](0007-derivations-vs-intent.md) | Split calculated-column derivations out of `intent` | Accepted |
+| [0008](0008-implementation-via-pr.md) | Generated implementations land via pull request | Accepted |
+| [0009](0009-deployment-ledger.md) | Append-only deployment ledger in Unity Catalog | Accepted |
 
 Format: context → decision → consequences. New ADRs are numbered sequentially and
 never deleted; superseded ADRs are marked as such and linked forward.
