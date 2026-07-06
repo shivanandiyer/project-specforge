@@ -1,0 +1,52 @@
+# Example contract — the canonical walkthrough spec used across the docs.
+# See docs/spec/dsl-specification.md for full field semantics.
+apiVersion: v3.0.2
+kind: DataContract
+id: orders-daily
+name: Orders Daily
+version: 2.1.0
+domain: sales
+status: active
+owner: sales-data-team
+description:
+  purpose: Daily-grain successful orders for finance and merch analytics.
+  usage: Aggregations and joins on order_id; not for real-time operational lookups.
+schema:
+  - name: orders_daily
+    physicalName: orders_daily
+    properties:
+      - { name: order_id,   logicalType: string, required: true, unique: true,
+          description: Natural key from the commerce platform. }
+      - { name: order_date, logicalType: date,   required: true }
+      - { name: net_amount, logicalType: number, required: true,
+          description: "Order total net of tax and discounts, AUD.",
+          classification: financial }
+quality:
+  - { rule: uniqueness, column: order_id, severity: error }
+  - { rule: rowCountChange, mustBeLessThan: 30, severity: warn }
+  - { type: sql, description: No negative net amounts,
+      query: "SELECT COUNT(*) FROM {table} WHERE net_amount < 0",
+      mustBe: 0, severity: error }
+slaProperties:
+  - { property: freshness, value: 6, unit: h }
+  - { property: availability, value: 99.5, unit: percent }
+x-specforge:
+  build:   { target: auto, hint: batch, agent: claude_code, iteration_budget: 20 }
+  sources:
+    - { name: commerce_orders, connection: "uc:main.bronze.commerce_orders", expectation: cdc }
+    - { name: fx_rates,        connection: "uc:main.reference.fx_rates",     expectation: snapshot }
+  transformation:
+    intent: |
+      One row per successful order per day. Join fx_rates on order currency to
+      compute net_amount in AUD. Exclude test orders (customer_segment = internal).
+  operations:
+    environments:
+      dev:     { catalog: dev_main, schema: sales }
+      staging: { catalog: stg_main, schema: sales }
+      prod:    { catalog: main,     schema: sales_gold }
+    compute: serverless
+    schedule: "0 2 * * *"
+  governance:
+    publish_spec: true
+    grants:
+      - { principal: finance-analysts, privilege: SELECT }
