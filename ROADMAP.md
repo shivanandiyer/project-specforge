@@ -4,7 +4,7 @@ Sequencing principle: prove the deterministic spine first, add the agentic surfa
 second, close the loop last. Every phase ends with something demonstrable.
 
 ## Phase 0 — Specification (current)
-- Finalize DSL v0.1 (ODCS + `x-specforge`), JSON Schema for CI validation
+- Finalize DSL v0.1 (ODCS + `x-buildspec`), JSON Schema for CI validation
 - One real example contract in `specs/examples/`
 - **Exit:** a spec PR fails CI when invalid, passes when valid
 

@@ -8,7 +8,7 @@ lifecycle, (b) adopt ODCS (Bitol/Linux Foundation) and extend it, (c) adopt the
 older Data Contract Specification, (d) adopt DPDS (product-level descriptor).
 
 ## Decision
-Adopt **ODCS v3** as the base, with a single namespaced `x-specforge` extension
+Adopt **ODCS v3** as the base, with a single namespaced `x-buildspec` extension
 block for build/operations concerns ODCS intentionally omits.
 
 ## Rationale
@@ -23,6 +23,6 @@ block for build/operations concerns ODCS intentionally omits.
 ## Consequences
 - We accept ODCS's modeling opinions and version cadence; where the standard evolves,
   we track it.
-- Anything we put in `x-specforge` is ours to maintain and document (the DSL spec).
+- Anything we put in `x-buildspec` is ours to maintain and document (the DSL spec).
 - DPDS-style product-level concerns (ports, composition) are deferred; if needed,
   they layer above per-contract specs rather than replacing them.

@@ -30,7 +30,7 @@ quality:
 slaProperties:
   - { property: freshness, value: 6, unit: h }
   - { property: availability, value: 99.5, unit: percent }
-x-specforge:
+x-buildspec:
   build:   { target: auto, hint: batch, agent: claude_code, iteration_budget: 20 }
   sources:
     - { name: commerce_orders, connection: "uc:main.bronze.commerce_orders", expectation: cdc }

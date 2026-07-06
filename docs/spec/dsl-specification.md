@@ -4,9 +4,9 @@
 
 specforge does not invent a contract language. The spec is an
 **ODCS (Open Data Contract Standard) document** — the Bitol / Linux Foundation
-open standard — extended with one namespaced block, `x-specforge`, carrying the
+open standard — extended with one namespaced block, `x-buildspec`, carrying the
 information ODCS deliberately doesn't: *how the product should be built and
-operated*. ODCS answers "what is promised"; `x-specforge` answers "how specforge
+operated*. ODCS answers "what is promised"; `x-buildspec` answers "how specforge
 should realize the promise."
 
 Rationale for building on ODCS rather than a bespoke DSL:
@@ -71,7 +71,7 @@ slaProperties:                         # ODCS SLA block → compiled to monitors
     value: 99.5
     unit: percent
 
-x-specforge:                           # everything below is the specforge extension
+x-buildspec:                           # everything below is the specforge extension
   build:
     target: auto                       # lakeflow | dbt | auto   (§5)
     hint: batch                        # streaming | batch | dimensional
@@ -111,11 +111,11 @@ x-specforge:                           # everything below is the specforge exten
 | `schema` | ODCS | compiler | UC DDL; schema-conformance tests; brief's target schema |
 | `quality` | ODCS | compiler | Verifier test suite (`error`) + monitors (`warn`) |
 | `slaProperties` | ODCS | compiler | Lakehouse Monitoring configs |
-| `x-specforge.build` | ext | engine | Target routing, builder selection, budgets |
-| `x-specforge.sources` | ext | compiler → brief | Resolved source bindings for the agent |
-| `x-specforge.transformation.intent` | ext | brief only | Agent guidance (see §4) |
-| `x-specforge.operations` | ext | compiler | DAB targets, schedule, compute |
-| `x-specforge.governance` | ext | publisher | Grants, spec publication |
+| `x-buildspec.build` | ext | engine | Target routing, builder selection, budgets |
+| `x-buildspec.sources` | ext | compiler → brief | Resolved source bindings for the agent |
+| `x-buildspec.transformation.intent` | ext | brief only | Agent guidance (see §4) |
+| `x-buildspec.operations` | ext | compiler | DAB targets, schedule, compute |
+| `x-buildspec.governance` | ext | publisher | Grants, spec publication |
 
 ## 3. Validation contract
 
@@ -161,9 +161,9 @@ every spec diff and the plan output states the classification:
 
 ## 7. Reserved for future versions
 
-- `x-specforge.consumers` — declared downstream dependents, enabling impact analysis
+- `x-buildspec.consumers` — declared downstream dependents, enabling impact analysis
   on major bumps.
-- `x-specforge.derived_from` — product-to-product composition (a spec whose sources
+- `x-buildspec.derived_from` — product-to-product composition (a spec whose sources
   are other specforge products), the data-mesh growth path.
 - Multi-model contracts (one spec, several related output tables).
 
@@ -171,5 +171,5 @@ every spec diff and the plan output states the classification:
 
 An implementation of this DSL conforms if: (a) it accepts any valid ODCS v3 document,
 ignoring `x-` extensions it doesn't know; (b) it rejects unknown keys *inside*
-`x-specforge`; (c) compiled outputs for the same (spec, compiler version,
+`x-buildspec`; (c) compiled outputs for the same (spec, compiler version,
 environment) are byte-identical.

@@ -27,7 +27,7 @@ the truth. The spec does.
 
 ## How it works
 
-1. **Author** a data contract in [ODCS](https://bitol.io) YAML plus a small `x-specforge`
+1. **Author** a data contract in [ODCS](https://bitol.io) YAML plus a small `x-buildspec`
    extension block — schema, quality rules, SLAs, build hints. It lives in git and goes
    through PR review like any other engineering artifact.
 2. **Compile.** The deterministic compiler derives everything mechanically derivable
@@ -93,8 +93,9 @@ project-specforge/
 | [docs/architecture/compiler.md](docs/architecture/compiler.md) | The deterministic compiler |
 | [docs/architecture/agents.md](docs/architecture/agents.md) | Builder SPI, agent contract, MCP surface |
 | [docs/architecture/runtime.md](docs/architecture/runtime.md) | Deploy, observe, and the reconciliation loop |
-| [docs/spec/dsl-specification.md](docs/spec/dsl-specification.md) | The spec format: ODCS + `x-specforge` |
+| [docs/spec/dsl-specification.md](docs/spec/dsl-specification.md) | The spec format: ODCS + `x-buildspec` |
 | [docs/adr/](docs/adr/) | Why the architecture is the way it is |
+| [docs/GLOSSARY.md](docs/GLOSSARY.md) | Reference for jargon and acronyms (ODCS, DSL, DAB, SPI, MCP, etc.) |
 | [ROADMAP.md](ROADMAP.md) | Phased delivery plan |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to extend the platform |
 

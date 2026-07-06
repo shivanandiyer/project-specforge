@@ -19,7 +19,7 @@ flowchart LR
 ```
 
 ### 1. Parse
-Read the ODCS YAML plus the `x-specforge` extension block into a typed model. Reject
+Read the ODCS YAML plus the `x-buildspec` extension block into a typed model. Reject
 unknown top-level keys early — silence here becomes confusion downstream.
 
 ### 2. Validate

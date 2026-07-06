@@ -9,7 +9,7 @@ only where judgment is required*.
 ```mermaid
 flowchart TB
     subgraph SP["Specification plane — the truth"]
-        SPEC["ODCS contract + x-specforge<br/>(git, PR-reviewed)"]
+        SPEC["ODCS contract + x-buildspec<br/>(git, PR-reviewed)"]
     end
     subgraph CP["Control plane — deterministic"]
         ENGINE["Engine<br/>(plan / apply, phase sequencing)"]

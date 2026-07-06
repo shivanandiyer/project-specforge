@@ -8,7 +8,7 @@ brief going in, a verifier-enforced gate coming out.
 ## The builder SPI
 
 One builder agent runs per build. Which one is a per-spec configuration choice
-(`x-specforge.agent`), not an architectural commitment
+(`x-buildspec.agent`), not an architectural commitment
 ([ADR-0002](../adr/0002-single-pluggable-builder.md)).
 
 ```mermaid

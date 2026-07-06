@@ -8,7 +8,7 @@ results. The project owner directed a simpler model: one agent per run, no curre
 preference between the two.
 
 ## Decision
-Exactly one builder executes per build, selected by `x-specforge.build.agent`.
+Exactly one builder executes per build, selected by `x-buildspec.build.agent`.
 All builders implement a fixed SPI (brief in → implementation + build log out) so
 the engine is agent-blind.
 
