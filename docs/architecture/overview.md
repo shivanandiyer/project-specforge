@@ -105,7 +105,9 @@ Splitting derivation from generation fixes all three:
 | Documentation (product page, column docs, lineage stubs) | Yes — from the whole spec | Compiler |
 | Generation brief (what the agent must build, and the acceptance tests it must pass) | Yes | Compiler |
 | Calculated columns (`transformation.derivations` — single-row expressions) | Yes — it's a declared expression | Compiler |
-| **Transformation logic** (joins, filters, dedup — `transformation.intent`) | **No — requires judgment** | **Builder agent** |
+| Deduplication (`transformation.deduplication` — key + tiebreaker) | Yes — it's a declared window function | Compiler |
+| Row-level reject handling (`transformation.quarantine` — validity checks + sink) | Yes — it's a declared filter + sink | Compiler |
+| **Transformation logic** (joins, judgment filters — `transformation.intent`) | **No — requires judgment** | **Builder agent** |
 | **Evolution proposals** (how to respond to drift) | **No — requires judgment** | **Agent, as a PR** |
 
 The agentic surface is two rows. Everything else is reproducible, diffable in PRs,

@@ -87,6 +87,21 @@ x-buildspec:                           # everything below is the specforge exten
   transformation:
     derivations:                       # compiler-computed calculated columns (§4)
       net_amount: "commerce_orders.gross_amount * fx_rates.rate_to_aud - commerce_orders.discount_amount"
+    deduplication:                     # compiler-computed dedup (§4, ADR-0010)
+      key: order_id
+      order_by: commerce_orders.source_updated_at
+      keep: latest
+    quarantine:                        # compiler-computed reject sink (§4, ADR-0011)
+      enabled: true
+      sink: orders_daily_quarantine
+      reason_column: quarantine_reason
+      rules:
+        - name: missing_order_id
+          check: "commerce_orders.order_id IS NOT NULL"
+          reason: "order_id missing"
+        - name: negative_quantity
+          check: "commerce_orders.quantity > 0"
+          reason: "non-positive quantity"
     intent: |                          # natural-language intent — agent guidance,
       One row per successful order per day, keyed by order_id. Join fx_rates on   # never truth
       order currency to resolve rate_to_aud. Exclude test orders
@@ -116,7 +131,9 @@ x-buildspec:                           # everything below is the specforge exten
 | `x-buildspec.build` | ext | engine | Target routing, builder selection, budgets |
 | `x-buildspec.sources` | ext | compiler → brief | Resolved source bindings for the agent |
 | `x-buildspec.transformation.derivations` | ext | compiler | Calculated columns, compiled directly — no agent (see §4) |
-| `x-buildspec.transformation.intent` | ext | brief only | Agent guidance for join/filter/dedup logic (see §4) |
+| `x-buildspec.transformation.deduplication` | ext | compiler | Business-key dedup, compiled directly — no agent (see §4, [ADR-0010](../adr/0010-declarative-deduplication.md)) |
+| `x-buildspec.transformation.quarantine` | ext | compiler | Row-level reject sink, compiled directly — no agent (see §4, [ADR-0011](../adr/0011-quarantine-sink.md)) |
+| `x-buildspec.transformation.intent` | ext | brief only | Agent guidance for joins and judgment-requiring filters (see §4) |
 | `x-buildspec.operations` | ext | compiler | DAB targets, schedule, compute |
 | `x-buildspec.governance` | ext | publisher | Grants, spec publication |
 
@@ -128,35 +145,52 @@ Validation runs in CI on every spec PR with no Databricks connection required fo
 layers 1–2; layer 3 (policy) may consult org config. A spec that doesn't validate
 never reaches an agent.
 
-## 4. Derivations vs. `intent` — where business logic lives
+## 4. Derivations, deduplication, quarantine, and `intent` — where business logic lives
 
-Business logic that maps sources to the contracted schema splits into two blocks,
-by whether it needs judgment ([ADR-0007](../adr/0007-derivations-vs-intent.md)):
+Business logic that maps sources to the contracted schema splits across four
+sub-blocks, by whether it needs judgment. Three are compiler territory — a
+mechanical, declared operation compiled directly, no agent involved, wrong-answer-is-
+a-spec-diff-away-from-fixed. One is agent territory, and stays deliberately small.
 
 **`transformation.derivations`** — a map of `<output column>: <expression>`, where
 the expression is a single-row SQL expression over already-resolved input fields —
 one output row in, one output row out, no aggregates, no window functions. A 1:1
 lookup already set up by `intent` (e.g. an FX rate per order) is fine; a one-to-many
-join or aggregation is not. This is compiler territory: derivations are compiled
-directly into the target's generated code, the same way `schema` becomes DDL and
-`quality` becomes tests. No agent is involved, and a wrong formula is a spec diff
-away from being fixed, not a build away.
+join or aggregation is not. ([ADR-0007](../adr/0007-derivations-vs-intent.md))
+
+**`transformation.deduplication`** — `key` (business key column(s)), `order_by` (the
+tiebreaker column), `keep` (`latest` | `earliest`). Compiles to a window-function
+dedup. Covers the overwhelmingly common case — one key, one tiebreaker — not
+multi-column tiebreakers or cross-source merge logic.
+([ADR-0010](../adr/0010-declarative-deduplication.md))
+
+**`transformation.quarantine`** — `rules`, a list of `{name, check, reason}`, where
+`check` is a single-row boolean expression with the same constraints as a
+derivation. Rows failing any rule are excluded from the curated output and written
+to `sink` (default `<table>_quarantine`) with `reason_column` capturing why. This is
+independent of the ODCS `quality` block: `quality` still gates the build and feeds
+monitors; `quarantine` governs row-level disposition of what actually ships.
+([ADR-0011](../adr/0011-quarantine-sink.md))
 
 **`transformation.intent`** — the one free-text field, narrowed to logic that
 genuinely requires judgment: which rows qualify, which join keys to use, how to
-deduplicate, which source wins on conflict. It has exactly one consumer, the
-generation brief, and it is *guidance* for the agent, never *truth* — the truth is
-the schema + quality + acceptance tests. If intent and tests disagree, tests win, and
-the correct fix is a spec PR. This keeps natural language useful (it dramatically
-improves first-pass generation quality) without letting it become an unenforceable
-side-channel contract.
+resolve conflicting sources, anything the three mechanical blocks above don't cover.
+It has exactly one consumer, the generation brief, and it is *guidance* for the
+agent, never *truth* — the truth is the schema + quality + acceptance tests. If
+intent and tests disagree, tests win, and the correct fix is a spec PR. This keeps
+natural language useful (it dramatically improves first-pass generation quality)
+without letting it become an unenforceable side-channel contract.
 
-**Rule of thumb:** if it's a per-row expression — even one that reaches across a
-1:1 lookup already set up by `intent` (e.g. resolving an FX rate per order) — it
-belongs in `derivations`. If it requires aggregation, window functions, or a
-one-to-many/fan-out join, it belongs in `intent`, built by the agent. The compiler's
-semantic validation layer rejects a derivation expression containing an aggregate or
-window function, since that's a sign the logic needs more than a per-row lookup.
+**Rule of thumb:** if it's a per-row expression or a single-key-single-tiebreaker
+dedup or a per-row validity check with a clear exclude-and-capture disposition, it
+belongs in `derivations` / `deduplication` / `quarantine` respectively — even one
+that reaches across a 1:1 lookup already set up by `intent` (e.g. resolving an FX
+rate per order). If it requires aggregation, window functions beyond a single dedup
+tiebreaker, a one-to-many/fan-out join, or genuine judgment about which rows or
+sources win, it belongs in `intent`, built by the agent. The compiler's semantic
+validation layer rejects any of the three mechanical blocks' expressions if they
+contain an aggregate or window function, or reference an unknown column — that's the
+signal the logic needs more than a per-row rule and belongs in `intent` instead.
 
 ## 5. Build-target routing
 

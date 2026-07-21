@@ -60,6 +60,8 @@ through every emitter.
 | **monitors** | Lakehouse Monitoring configs | Freshness/volume/quality monitors from the SLA block |
 | **docs** | Product page, column-level docs | Rendered from the spec — documentation can't drift from the contract because it *is* the contract |
 | **derivations** | Calculated-column expressions compiled into the target's scaffold (dbt model / Lakeflow step) | From `transformation.derivations` ([ADR-0007](../adr/0007-derivations-vs-intent.md)); compiler-authored, agent builds around it and never rewrites it |
+| **deduplication** | A window-function dedup compiled into the target's scaffold | From `transformation.deduplication` ([ADR-0010](../adr/0010-declarative-deduplication.md)); business key + tiebreaker only |
+| **quarantine** | Curated-output filter + reject-sink DDL and reason capture | From `transformation.quarantine` ([ADR-0011](../adr/0011-quarantine-sink.md)); independent of the `quality` block's gate/monitor semantics |
 | **brief** | The generation brief (below) | The compiler's contract with the agent |
 
 ## The generation brief

@@ -35,6 +35,33 @@ sequenceDiagram
 | **Guarantees required of every builder** | Runs headless/unattended (CI-invokable); writes only inside the workspace and scratch schema; terminates (iteration budget); emits the build log even on failure |
 | **Explicitly not the builder's job** | Deciding what "correct" means; deploying; touching production; modifying the spec |
 
+**What the build log must contain.** "Structured" means a fixed, machine-readable
+shape every builder emits, not free-text prose — recorded in the deployment ledger
+([ADR-0009](../adr/0009-deployment-ledger.md)), it becomes the corpus a future
+builder-evaluation harness replays and scores against (see
+[ARCHITECTURE_REVIEW.md](../../ARCHITECTURE_REVIEW.md), R8) — not just a courtesy log:
+
+- objects created or changed (files, tables, pipeline)
+- pipeline/run result and row counts per layer, including quarantine counts by
+  reason if `transformation.quarantine` is declared ([ADR-0011](../adr/0011-quarantine-sink.md))
+- test results (which acceptance tests ran, pass/fail)
+- reconciliation results where applicable (e.g. gold-to-silver totals tying out)
+- assumptions, limitations, or deviations from the brief
+- steps to rerun or tear down what was built
+
+This list is deliberately concrete rather than "emit something useful" — a
+[real spec-driven PoC](https://github.com/shivanandiyer/dbrx-spec-driven-development)
+run against Genie Code converged on almost exactly this report shape by hand,
+independently of specforge. It's evidence the shape is right, not just a guess.
+
+**Why the brief, not the raw spec.** That same PoC's specification is itself the
+prompt: no compiler, no brief, no gate between the written spec and the agent. It
+works, but only with the one agent it was written for and against the one workspace
+it was tested in — the author's own README says as much. That's precisely the
+failure mode the brief exists to prevent: the agent never reads the raw spec, so
+swapping Claude Code for Genie Code (or adding a third builder) is a config change,
+not a rewrite of what the agent is told to do.
+
 **v1 implementations:**
 
 - **`builders/claude_code/`** — Claude Code invoked headless via CLI. The builder

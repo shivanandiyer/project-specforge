@@ -11,6 +11,8 @@
 | [0007](0007-derivations-vs-intent.md) | Split calculated-column derivations out of `intent` | Accepted |
 | [0008](0008-implementation-via-pr.md) | Generated implementations land via pull request | Accepted |
 | [0009](0009-deployment-ledger.md) | Append-only deployment ledger in Unity Catalog | Accepted |
+| [0010](0010-declarative-deduplication.md) | Declarative deduplication (business key + tiebreaker) | Accepted |
+| [0011](0011-quarantine-sink.md) | Quarantine as a compiler-owned transformation concern | Accepted |
 
 Format: context → decision → consequences. New ADRs are numbered sequentially and
 never deleted; superseded ADRs are marked as such and linked forward.

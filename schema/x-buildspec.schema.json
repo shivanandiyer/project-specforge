@@ -46,6 +46,47 @@
           "description": "Single-row calculated-column expressions (ADR-0007). No agent involved.",
           "additionalProperties": { "type": "string", "minLength": 1 }
         },
+        "deduplication": {
+          "type": "object",
+          "description": "Business-key dedup, compiled directly (ADR-0010). No agent involved.",
+          "additionalProperties": false,
+          "required": ["key", "order_by"],
+          "properties": {
+            "key": {
+              "oneOf": [
+                { "type": "string", "minLength": 1 },
+                { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+              ]
+            },
+            "order_by": { "type": "string", "minLength": 1 },
+            "keep": { "enum": ["latest", "earliest"], "default": "latest" }
+          }
+        },
+        "quarantine": {
+          "type": "object",
+          "description": "Row-level reject sink, compiled directly (ADR-0011). No agent involved.",
+          "additionalProperties": false,
+          "required": ["enabled", "rules"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "sink": { "type": "string", "minLength": 1 },
+            "reason_column": { "type": "string", "minLength": 1, "default": "quarantine_reason" },
+            "rules": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "check", "reason"],
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "check": { "type": "string", "minLength": 1 },
+                  "reason": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          }
+        },
         "intent": {
           "type": "string",
           "minLength": 1,
